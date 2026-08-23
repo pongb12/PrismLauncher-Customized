@@ -1201,6 +1201,11 @@ LaunchTask* MinecraftInstance::createLaunchTask(AuthSessionPtr session, Minecraf
             process->appendStep(makeShared<TaskStepWrapper>(pptr, t));
         }
     } else {
+        // No account to claim in offline mode, but missing libraries and assets still need to be fetched from the
+        // (authentication-free) download servers before launching.
+        for (auto t : createUpdateTask()) {
+            process->appendStep(makeShared<TaskStepWrapper>(pptr, t));
+        }
         process->appendStep(makeShared<EnsureOfflineLibraries>(pptr, this));
     }
 
