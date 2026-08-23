@@ -1,0 +1,89 @@
+name: Build Windows
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      build-type:
+        description: Type of build (Release or Debug)
+        type: string
+        default: Release
+
+permissions: {}
+
+jobs:
+  build:
+    name: Build (Windows-x64)
+
+    runs-on: windows-2022
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    env:
+      ARTIFACT_NAME: Windows-x64
+      BUILD_PLATFORM: pongb12-custom
+      BUILD_TYPE: ${{ inputs.build-type || 'Release' }}
+      VCPKG_TRIPLET: x64-mingw-static-release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup MSYS2 (CLANG64)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANG64
+          update: true
+          install: >-
+            git
+          pacboy: >-
+            toolchain:p
+            cmake:p
+            ninja:p
+            qt6-base:p
+            qt6-svg:p
+            qt6-imageformats:p
+            qt6-networkauth:p
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - name: Configure project
+        run: |
+          cmake --preset windows_mingw \
+            -D VCPKG_HOST_TRIPLET="$VCPKG_TRIPLET" \
+            -D VCPKG_TARGET_TRIPLET="$VCPKG_TRIPLET"
+
+      - name: Run build
+        run: |
+          cmake --build --preset windows_mingw --config "$BUILD_TYPE"
+
+      - name: Install (full)
+        run: |
+          cmake --install build --config "$BUILD_TYPE"
+
+      - name: Package portable
+        run: |
+          cp -r install install-portable
+          cmake --install build --config "$BUILD_TYPE" --prefix install-portable --component portable
+          touch install-portable/manifest.txt
+          for l in $(find install-portable -type f); do
+            l=${l#install-portable/}
+            echo "$l" >> install-portable/manifest.txt
+          done
+
+      - name: Upload portable zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: PrismLauncher-${{ env.ARTIFACT_NAME }}-Portable
+          path: install-portable/**
