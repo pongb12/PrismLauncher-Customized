@@ -532,3 +532,21 @@ if(BUILD_TESTING)
 endif()
 # NOTE: this must always be last to appease the CMake deity of quirky install command evaluation order.
 add_subdirectory(launcher)
+
+if(UNIX AND NOT APPLE)
+    set(CPACK_GENERATOR "DEB")
+    set(CPACK_PACKAGE_NAME "prismlauncher")
+    set(CPACK_PACKAGE_VENDOR "Prism Launcher Contributors")
+    set(CPACK_PACKAGE_CONTACT "Prism Launcher Contributors")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A custom launcher for Minecraft")
+    set(CPACK_PACKAGE_VERSION "${Launcher_VERSION_NAME}")
+    set(CPACK_PACKAGE_FILE_NAME "PrismLauncher-${Launcher_VERSION_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+    set(CPACK_DEBIAN_PACKAGE_SECTION "games")
+    set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://prismlauncher.org")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS
+        "libc6, libgcc-s1, libstdc++6, (libqt6core6 (>= 6.4) | libqt6core6t64 (>= 6.4)), (libqt6gui6 (>= 6.4) | libqt6gui6t64 (>= 6.4)), (libqt6widgets6 (>= 6.4) | libqt6widgets6t64 (>= 6.4)), (libqt6network6 (>= 6.4) | libqt6network6t64 (>= 6.4)), (libqt6networkauth6 (>= 6.4) | libqt6networkauth6t64 (>= 6.4)), (libqt6opengl6 (>= 6.4) | libqt6opengl6t64 (>= 6.4)), (libqt6xml6 (>= 6.4) | libqt6xml6t64 (>= 6.4)), (libqt6dbus6 (>= 6.4) | libqt6dbus6t64 (>= 6.4)), libgamemode0"
+    )
+    set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS OFF)
+    include(CPack)
+endif()
